@@ -52,8 +52,38 @@ var BrowserTitle = React.createClass({
 var QueryBuilder = React.createClass({
   displayName: "QueryBuilder",
   mixins: [React.addons.LinkedStateMixin],
+  paramNameMap: {
+    genericDrug:      "patient.drug.openfda.generic_name",
+    manufacturerName: "patient.drug.openfda.manufacturer_name",
+    dosageForm:       "patient.drug.openfda.dosage_form",
+    brandName:        "patient.drug.openfda.brand_name",
+    productType:      "patient.drug.openfda.product_type",
+    route:            "patient.drug.openfda.route"
+  },
+  predicate: function(value, openFDAParamName) {
+    console.log("Making a predicate. idx:", openFDAParamName, "val:", value);
+    return this.paramNameMap[openFDAParamName] + ':"' + value + '"';
+  },
+  conjunction: function(param1, param2) {
+    return param1 + "+AND+" + param2;
+  },
+  constructSearch: function(params) {
+    var query = "?search=",
+        predicates = _.chain(params)
+                      .map(this.predicate)
+                      .reduce(this.conjunction)
+                      .value();
+
+    return predicates;
+  },
+  makeQuery: function(props) {
+    var limit = props.limit;
+    delete props.limit;
+    return this.constructSearch(props) + (limit ? "&limit=" + limit : "");
+  },
   handleChange: function(unclear) {
     console.log("There was some change to the form.");
+    console.log("constructed query: ", this.makeQuery(this.props));
     this.props.updateQuery('?search=patient.drug.openfda.substance_name:"' + this.state.genericDrug + '"');
   },
   getInitialState: function() {
@@ -63,11 +93,13 @@ var QueryBuilder = React.createClass({
   },
   render: function() {
     console.log("Rendering builder.");
-      //this.props.updateQuery({genericDrug: this.state.genericDrug, limit: this.state.numResults});
+    //this.props.updateQuery({genericDrug: this.state.genericDrug, limit: this.state.numResults});
 
     return ReactBootstrap.Panel({},
       React.DOM.form({role: "form", onChange: this.handleChange },
+        React.DOM.p({}, "Currently, all predicates are simply joined with a boolean AND. Take note!"),
         ReactBootstrap.Input({ref: "genericDrug", label: "Generic drug name", id: "genericDrug", valueLink: this.linkState('genericDrug'), type: "text"}, null),
+        ReactBootstrap.Input({ref: "manufacturerName", label: "Manufacturer name", id: "manufacturerName", valueLink: this.linkState('manufacturerName'), type: "text"}, null),
         ReactBootstrap.Input({ref: "numResults", label: "Number of results (max 100)", id: "numResults", valueLink: this.linkState('numResults'), type: "text"}, null)
       )
     )
