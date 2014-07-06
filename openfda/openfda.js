@@ -1,5 +1,25 @@
 var OpenFDABrowser = React.createClass({
   displayName: "OpenFDABrowser",
+  getInitialState: function() {
+    return {
+      response: "Nobody here but us chickens."
+    };
+  },
+  doQuery: function(query) {
+    console.log("Querying.");
+    var xhr = new XMLHttpRequest(),
+        apiEndpoint = "https://api.fda.gov/drug/event.json",
+        self = this;
+
+    xhr.onreadystatechange = function() {
+      console.log("Got some response data.");
+      self.setState({response: xhr.responseText})
+    };
+    console.log("Sending query RIGHT NOW: ", query);
+    xhr.open("GET", apiEndpoint + query, true);
+    xhr.send(null);
+  },
+  debouncedQuery: _.debounce(function(query) {this.doQuery(query);}, 1000),
   render: function() {
     return ReactBootstrap.Grid({fluid: true},
       ReactBootstrap.Row({},
@@ -8,11 +28,11 @@ var OpenFDABrowser = React.createClass({
       )),
       ReactBootstrap.Row({},
         ReactBootstrap.Col({md: 4},
-          QueryBuilder({})
+          QueryBuilder({updateQuery: this.debouncedQuery})
         ),
         ReactBootstrap.Col({md: 8},
-          ResponseJSONDisplay({}),
-          OpenFDAGraph({})
+          OpenFDAGraph({}),
+          ResponseJSONDisplay({response: this.state.response})
         )
       )
    );
@@ -23,7 +43,7 @@ var BrowserTitle = React.createClass({
   displayName: "BrowserTitle",
   render: function() {
     return ReactBootstrap.PageHeader({},
-            React.DOM.h1({}, "OpenFDA, meet Plot.ly ",
+            React.DOM.h1({}, "OpenFDA, meet d3.js ",
               React.DOM.small({}, "Investigate adverse drug event reports"
            )));
   }
@@ -31,10 +51,24 @@ var BrowserTitle = React.createClass({
 
 var QueryBuilder = React.createClass({
   displayName: "QueryBuilder",
+  mixins: [React.addons.LinkedStateMixin],
+  handleChange: function(unclear) {
+    console.log("There was some change to the form.");
+    this.props.updateQuery('?search=patient.drug.openfda.substance_name:"' + this.state.genericDrug + '"');
+  },
+  getInitialState: function() {
+    return {
+      genericDrug: "fluoxetine"
+    };
+  },
   render: function() {
+    console.log("Rendering builder.");
+      //this.props.updateQuery({genericDrug: this.state.genericDrug, limit: this.state.numResults});
+
     return ReactBootstrap.Panel({},
-      React.DOM.form({role: "form"},
-        ReactBootstrap.Input({label: "Drug", id: "drug", defaultValue: "fluoxetine", type: "text"}, null)
+      React.DOM.form({role: "form", onChange: this.handleChange },
+        ReactBootstrap.Input({ref: "genericDrug", label: "Generic drug name", id: "genericDrug", valueLink: this.linkState('genericDrug'), type: "text"}, null),
+        ReactBootstrap.Input({ref: "numResults", label: "Number of results (max 100)", id: "numResults", valueLink: this.linkState('numResults'), type: "text"}, null)
       )
     )
   }
@@ -43,7 +77,7 @@ var QueryBuilder = React.createClass({
 var ResponseJSONDisplay = React.createClass({
   displayName: "ResponseJSONDisplay",
   render: function() {
-    return ReactBootstrap.Panel({header: "Response JSON"}, "???")
+    return ReactBootstrap.Panel({header: "Response JSON"}, React.DOM.pre({}, this.props.response));
   }
 });
 
@@ -61,12 +95,6 @@ React.renderComponent(
 );
 
 /**
-$(document).ready(function() {
-  $("#refreshButton").bind("click", function(e) {
-    var drugInput = $("#drug")[0],
-        resultsDiv = $("#resultsJSON")[0];
-
-    console.log("Hit the button!");
     $.ajax('https://api.fda.gov/drug/event.json',
            {
              data: {
@@ -79,6 +107,4 @@ $(document).ready(function() {
              }
            }
           );
-  });
-});
 **/
