@@ -73,32 +73,49 @@ var QueryBuilder = React.createClass({
     return prefix + predicates;
   },
   makeQuery: function(props) {
-    var limit = props.limit;
-    delete props.limit;
-    return this.constructSearch(props) + (limit ? "&limit=" + limit : "");
+    var limit = this.state.openFDA.numResults;
+    delete this.state.openFDA.numResults;
+    return "?" + this.constructSearch(props) + (limit ? "&limit=" + limit : "");
   },
   handleChange: function(unclear) {
-    console.log("There was some change to the form.");
-    console.log("constructed query: ", this.makeQuery(this.props));
-    this.props.updateQuery('?search=patient.drug.openfda.substance_name:"' + this.state.genericDrug + '"');
+    this.props.updateQuery(this.makeQuery(this.state.openFDA));
   },
   getInitialState: function() {
     return {
-      genericDrug: "fluoxetine"
+      openFDA: {}
     };
   },
+  updateOpenFDAParam: function(paramName, paramValue) {
+    this.state.openFDA[paramName] = paramValue;
+    this.handleChange();
+  },
   render: function() {
-    console.log("Rendering builder.");
     //this.props.updateQuery({genericDrug: this.state.genericDrug, limit: this.state.numResults});
 
     return ReactBootstrap.Panel({},
-      React.DOM.form({role: "form", onChange: this.handleChange },
+      React.DOM.form({role: "form"},
         React.DOM.p({}, "Currently, all predicates are simply joined with a boolean AND. Take note!"),
-        ReactBootstrap.Input({ref: "genericDrug", label: "Generic drug name", id: "genericDrug", valueLink: this.linkState('genericDrug'), type: "text"}, null),
-        ReactBootstrap.Input({ref: "manufacturerName", label: "Manufacturer name", id: "manufacturerName", valueLink: this.linkState('manufacturerName'), type: "text"}, null),
-        ReactBootstrap.Input({ref: "numResults", label: "Number of results (max 100)", id: "numResults", valueLink: this.linkState('numResults'), type: "text"}, null)
+        OpenFDAParam({label: "Generic drug name", id: "genericDrug", updateOpenFDAParam: this.updateOpenFDAParam, type: "text"}, null),
+        OpenFDAParam({label: "Manufacturer name", id: "manufacturerName", updateOpenFDAParam: this.updateOpenFDAParam, type: "text"}, null),
+        OpenFDAParam({label: "Number of results (max 100)", id: "numResults", updateOpenFDAParam: this.updateOpenFDAParam, type: "text"}, null)
       )
     )
+  }
+});
+
+var OpenFDAParam = React.createClass({
+  displayName: "OpenFDAParam",
+  handleChange: function(e) {
+    this.props.updateOpenFDAParam(this.props.id, e.target.value);
+    this.setState({value: e.target.value});
+  },
+  getInitialState: function() {
+    return {
+      value: (this.props.defaultValue ? this.props.defaultValue : "")
+    }
+  },
+  render: function() {
+    return ReactBootstrap.Input({ref: this.props.id, label: this.props.label, id: this.props.id, value: this.props.value, type: this.props.type, onChange: this.handleChange}, null);
   }
 });
 
