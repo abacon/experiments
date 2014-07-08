@@ -68,13 +68,13 @@ var QueryBuilder = React.createClass({
     return param1 + "+AND+" + param2;
   },
   constructSearch: function(params) {
-    var query = "?search=",
+    var prefix = "search=",
         predicates = _.chain(params)
                       .map(this.predicate)
                       .reduce(this.conjunction)
                       .value();
 
-    return predicates;
+    return prefix + predicates;
   },
   makeQuery: function(props) {
     var limit = props.limit;
