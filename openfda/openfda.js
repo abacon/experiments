@@ -6,16 +6,13 @@ var OpenFDABrowser = React.createClass({
     };
   },
   doQuery: function(query) {
-    console.log("Querying.");
     var xhr = new XMLHttpRequest(),
         apiEndpoint = "https://api.fda.gov/drug/event.json",
         self = this;
 
     xhr.onreadystatechange = function() {
-      console.log("Got some response data.");
       self.setState({response: xhr.responseText})
     };
-    console.log("Sending query RIGHT NOW: ", query);
     xhr.open("GET", apiEndpoint + query, true);
     xhr.send(null);
   },
@@ -61,7 +58,6 @@ var QueryBuilder = React.createClass({
     route:            "patient.drug.openfda.route"
   },
   predicate: function(value, openFDAParamName) {
-    console.log("Making a predicate. idx:", openFDAParamName, "val:", value);
     return this.paramNameMap[openFDAParamName] + ':"' + value + '"';
   },
   conjunction: function(param1, param2) {
