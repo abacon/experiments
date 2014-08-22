@@ -228,7 +228,7 @@ var Param = React.createClass({
     };
   },
   render: function() {
-    return ReactBootstrap.Input({ref: this.props.id, addonAfter: this.removable(), label: this.props.label, id: this.props.id, value: this.props.value, type: this.props.type, onChange: this.handleChange}, null);
+    return ReactBootstrap.Input({ref: this.props.id, addonAfter: this.removable(), defaultValue: this.props.defaultValue, label: this.props.label, id: this.props.id, value: this.props.value, type: this.props.type, onChange: this.handleChange}, null);
   }
 });
 
@@ -257,7 +257,7 @@ var Count = React.createClass({
 var Limit = React.createClass({
   displayName: "Limit",
   render: function() {
-    return Param({updateLimit: this.props.updateLimit, label: "# of results (max 100)", type: "text" }, null);
+    return Param({updateLimit: this.props.updateLimit, defaultValue: "1", label: "# of results (max 100)", type: "text" }, null);
   }
 });
 
