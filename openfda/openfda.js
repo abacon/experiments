@@ -11,7 +11,7 @@ var OpenFDABrowser = React.createClass({
         self = this;
 
     xhr.onreadystatechange = function() {
-      self.setState({response: xhr.responseText})
+      self.setState({response: xhr.responseText});
     };
     xhr.open("GET", apiEndpoint + query, true);
     xhr.send(null);
@@ -46,76 +46,214 @@ var BrowserTitle = React.createClass({
   }
 });
 
+// QueryBuilder:
+// ->Params
+// -->ParamAdder
+// -->Param1, Param2, etc.
+// ->CountAdder (checkbox + listbox)
+// ->LimitAdder (checkbox + number)
+
 var QueryBuilder = React.createClass({
   displayName: "QueryBuilder",
+  makeQueryString: function() {
+    return "?" + this.constructSearch(this.state.search) + this.constructLimit(this.state.limit) + this.constructCount(this.state.count);
+  },
+  getInitialState: function() {
+    return {};
+  },
   mixins: [React.addons.LinkedStateMixin],
   paramNameMap: {
-    genericDrug:      "patient.drug.openfda.generic_name",
-    manufacturerName: "patient.drug.openfda.manufacturer_name",
-    dosageForm:       "patient.drug.openfda.dosage_form",
-    brandName:        "patient.drug.openfda.brand_name",
-    productType:      "patient.drug.openfda.product_type",
-    route:            "patient.drug.openfda.route"
+    genericDrug:      {label: "Generic drug name",       paramName: "patient.drug.openfda.generic_name"},
+    manufacturerName: {label: "Manufacturer name",       paramName: "patient.drug.openfda.manufacturer_name"},
+    dosageForm:       {label: "Dosage form",             paramName: "patient.drug.openfda.dosage_form"},
+    brandName:        {label: "Brand-name",              paramName: "patient.drug.openfda.brand_name"},
+    productType:      {label: "Product type",            paramName: "patient.drug.openfda.product_type"},
+    route:            {label: "Route of administration", paramName: "patient.drug.openfda.route"}
   },
-  predicate: function(value, openFDAParamName) {
-    return this.paramNameMap[openFDAParamName] + ':"' + value + '"';
+  paramsList: function() {
+    return _.object(_.map(this.paramNameMap, function(value, id) {
+      return [id, value.label];
+    }));
+  },
+  predicate: function(value, paramId) {
+    return this.paramNameMap[paramId].paramName + ':"' + value + '"';
   },
   conjunction: function(param1, param2) {
     return param1 + "+AND+" + param2;
   },
+  constructLimit: function(limit) {
+    if (limit)
+      return "&limit=" + parseInt(limit);
+    else
+      return "";
+  },
+  constructCount: function(count) {
+    if (count)
+      return "&count=" + count.trim();
+    else
+      return "";
+  },
   constructSearch: function(params) {
-    var prefix = "search=",
-        predicates = _.chain(params)
-                      .map(this.predicate)
-                      .reduce(this.conjunction)
-                      .value();
+    var prefix, predicates;
+    if (!params || _.isEmpty(params))
+      return "";
+    prefix = "search=";
+    predicates = _.chain(params)
+                  .map(this.predicate)
+                  .reduce(this.conjunction)
+                  .value();
 
     return prefix + predicates;
   },
-  makeQuery: function(props) {
-    var limit = this.state.openFDA.numResults;
-    delete this.state.openFDA.numResults;
-    return "?" + this.constructSearch(props) + (limit ? "&limit=" + limit : "");
+  updateData: function(key, value) {
+    var data = {},
+        self = this;
+    data[key] = value;
+    this.setState(data, function() { self.handleChange(); });
   },
-  handleChange: function(unclear) {
-    this.props.updateQuery(this.makeQuery(this.state.openFDA));
-  },
-  getInitialState: function() {
-    return {
-      openFDA: {}
-    };
-  },
-  updateOpenFDAParam: function(paramName, paramValue) {
-    this.state.openFDA[paramName] = paramValue;
-    this.handleChange();
+  updateCount: function(val) { return this.updateData.apply(this, ["count"].concat(val)); },
+  updateLimit: function(val) { return this.updateData.apply(this, ["limit"].concat(val)); },
+  updateSearch: function(val) { return this.updateData.apply(this, ["search"].concat(val)); },
+  handleChange: function() {
+    this.props.updateQuery(this.makeQueryString());
   },
   render: function() {
-    //this.props.updateQuery({genericDrug: this.state.genericDrug, limit: this.state.numResults});
+
+    info = "All predicates are simply joined with a boolean AND. Take note!";
 
     return ReactBootstrap.Panel({},
-      React.DOM.form({role: "form"},
-        React.DOM.p({}, "Currently, all predicates are simply joined with a boolean AND. Take note!"),
-        OpenFDAParam({label: "Generic drug name", id: "genericDrug", updateOpenFDAParam: this.updateOpenFDAParam, type: "text"}, null),
-        OpenFDAParam({label: "Manufacturer name", id: "manufacturerName", updateOpenFDAParam: this.updateOpenFDAParam, type: "text"}, null),
-        OpenFDAParam({label: "Number of results (max 100)", id: "numResults", updateOpenFDAParam: this.updateOpenFDAParam, type: "text"}, null)
-      )
-    )
+                                React.DOM.form({role: "form"},
+                                               React.DOM.p({}, info),
+                                               // Need to add handleChanges for below
+                                               Params({paramsList: this.paramsList(), updateSearch: this.updateSearch}, null),
+                                               Count({updateCount: this.updateCount}, null),
+                                               Limit({updateLimit: this.updateLimit}, null)
+                                              )
+                               );
   }
 });
 
-var OpenFDAParam = React.createClass({
-  displayName: "OpenFDAParam",
+var Params = React.createClass({
+  displayName: "Params",
+  getInitialState: function() {
+    return {
+      activePredicates: {}
+    };
+  },
+  updateParam: function(predicateType, value) {
+    var activePreds = this.state.activePredicates;
+    activePreds[predicateType] = value;
+    this.setState({activePredicates: activePreds});
+    this.props.updateSearch(this.state.activePredicates);
+  },
+  addParam: function(predicateType) {
+    this.updateParam(predicateType, "");
+  },
+  removeParam: function(predicateType) {
+    var activePreds = this.state.activePredicates;
+    delete activePreds[predicateType];
+    this.setState({activePredicates: activePreds});
+    this.props.updateSearch(this.state.activePredicates);
+  },
+  unusedPredicates: function() {
+    var self                  = this,
+        availablePredicateIds = _.difference(_.keys(this.props.paramsList), _.keys(this.state.activePredicates)),
+        predicatesWithLabels  = _.object(_.map(availablePredicateIds, function(id) {
+          return [id, self.props.paramsList[id]];
+        }));
+
+    // { id: long name, id2: long name }
+    return predicatesWithLabels;
+  },
+  render: function() {
+    var self = this,
+        args = [{}, ParamAdder({unusedPredicates: this.unusedPredicates, addParam: this.addParam}, null)];
+
+    args = args.concat(_.map(this.state.activePredicates, function(value, id) {
+      return Param({label: self.props.paramsList[id], id: id, removable: true, type: "text", updateParam: self.updateParam, removeParam: self.removeParam, value: value}, null);
+    }));
+
+    return React.DOM.div.apply(this, args);
+  }
+});
+
+var ParamAdder = React.createClass({
+  displayName: "ParamAdder",
+  addParam: function(key) {
+    this.props.addParam(key);
+  },
+  render: function() {
+    var unusedPredicatesOptions = _.map(this.props.unusedPredicates(), function(itemDescription, itemId) {
+      return ReactBootstrap.MenuItem({key: itemId}, itemDescription);
+    });
+
+    var selectArgs = [{
+      //className: "form-control",
+      title: "Add a predicate",
+      onSelect: this.addParam,
+      disabled: !unusedPredicatesOptions.length
+    }].concat(unusedPredicatesOptions);
+
+    return ReactBootstrap.DropdownButton.apply(this, selectArgs);
+  }
+});
+
+var Param = React.createClass({
+  displayName: "Param",
   handleChange: function(e) {
-    this.props.updateOpenFDAParam(this.props.id, e.target.value);
+    if (this.props.updateParam)
+      this.props.updateParam(this.props.id, e.target.value);
+    else {
+      updater = this.props.updateLimit || this.props.updateCount;
+      updater(e.target.value);
+    }
     this.setState({value: e.target.value});
+  },
+  removable: function() {
+    if (this.props.removable)
+      return RemoveButton({remove: this.remove}, null);
+    else
+      return "";
+  },
+  remove: function() {
+    this.props.removeParam(this.props.id);
   },
   getInitialState: function() {
     return {
       value: (this.props.defaultValue ? this.props.defaultValue : "")
-    }
+    };
   },
   render: function() {
-    return ReactBootstrap.Input({ref: this.props.id, label: this.props.label, id: this.props.id, value: this.props.value, type: this.props.type, onChange: this.handleChange}, null);
+    return ReactBootstrap.Input({ref: this.props.id, addonAfter: this.removable(), label: this.props.label, id: this.props.id, value: this.props.value, type: this.props.type, onChange: this.handleChange}, null);
+  }
+});
+
+var RemoveButton = React.createClass({
+  handleClick: function() {
+    this.props.remove();
+  },
+  render: function() {
+    return ReactBootstrap.Button({onClick: this.handleClick}, ReactBootstrap.Glyphicon({glyph: "remove"}, null));
+  },
+  // ReactBootstrap.Input doesn't recognize when a button is passed as an addon.
+  componentDidMount: function() {
+    var parent = this.getDOMNode().parentElement;
+    if (parent.classList.contains("input-group-addon"))
+      this.getDOMNode().parentElement.className = "input-group-btn";
+  }
+});
+
+var Count = React.createClass({
+  displayName: "CountAdder",
+  render: function() {
+    return React.DOM.p({}, "A bootstrap checkbox-listbox combo.");
+  }
+});
+
+var Limit = React.createClass({
+  displayName: "Limit",
+  render: function() {
+    return Param({updateLimit: this.props.updateLimit, label: "# of results (max 100)", type: "text" }, null);
   }
 });
 
@@ -129,7 +267,7 @@ var ResponseJSONDisplay = React.createClass({
 var OpenFDAGraph = React.createClass({
   displayName: "OpenFDAGraph",
   render: function() {
-    return ReactBootstrap.Panel({header: "graph dat data"}, "")
+    return ReactBootstrap.Panel({header: "graph dat data"}, "");
   }
 });
 
