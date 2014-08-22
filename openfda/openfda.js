@@ -108,6 +108,10 @@ var QueryBuilder = React.createClass({
   updateData: function(key, value) {
     var data = {},
         self = this;
+    // Only update if there is data.
+    if (_.isEmpty(_.compact(value)))
+      return;
+
     data[key] = value;
     this.setState(data, function() { self.handleChange(); });
   },
