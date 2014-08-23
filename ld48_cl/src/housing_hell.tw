@@ -1,0 +1,17 @@
+﻿:: Start
+Your story will display this passage first. Edit it by double clicking it. 
+<<craigslist>>
+
+:: craigslist-module [script]
+!!!include craigslist-bundle.js
+
+:: craigslist-macro [script]
+!!!include craigslist-macro.js
+
+:: StoryTitle
+testestest
+
+:: StoryAuthor
+pants
+
+
