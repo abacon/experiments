@@ -5,6 +5,9 @@ Your story will display this passage first. Edit it by double clicking it.
 :: craigslist-module [script]
 !!!include craigslist-bundle.js
 
+:: addpassage-macro [script]
+!!!include addpassage-macro.js
+
 :: craigslist-macro [script]
 !!!include craigslist-macro.js
 
