@@ -1,6 +1,12 @@
 ﻿:: Start
-Your story will display this passage first. Edit it by double clicking it. 
-<<craigslist>>
+<<addPassage "phone" "" "Beep beep!">>
+<<display "The guest room at your parents' house">>
+
+:: The guest room at your parents' house
+You're sitting in bed. It's been two weeks since you got home, and you've really got nothing to show for it. You should probably continue your futile search for housing. To your left is your nightstand, upon which is a light, your [[computer]], your [[phone]], and your [[glasses]]. A [[pile of clothing]] lies on the floor to your left.
+
+:: computer
+This is a computer. It goes "beep boop!"
 
 :: craigslist-module [script]
 !!!include craigslist-bundle.js
@@ -11,8 +17,9 @@ Your story will display this passage first. Edit it by double clicking it.
 :: craigslist-macro [script]
 !!!include craigslist-macro.js
 
+
 :: StoryTitle
-testestest
+Housing Hell
 
 :: StoryAuthor
 pants
