@@ -1,0 +1,51 @@
+#! /usr/bin/ruby
+
+require 'optparse'
+
+
+
+def main(args)
+  if (!args.nil?)
+    concat_files(args[0])
+  else
+    puts "Usage: build <srcdir> > <output>"
+  end
+end
+
+def debug(str)
+  puts "[DEBUG] #{str}"
+end
+
+def concat_files(srcdir)
+  story = Dir.glob("#{srcdir}/*.tw");
+
+  if (!story.empty?)
+    debug "Subbing for file at #{story[0]}."
+    substitute_includes(story[0]);
+  else
+    puts "Cannot find .tw file at #{srcdir}/*.tw"
+  end
+end
+
+def substitute_includes(story_file)
+  File.open(story_file, "r") do |story|
+    story_definition = story.read()
+    missing_files = []
+    story_definition.gsub(/!!!include (.*)$/) do |match|
+      sub_contents = ""
+      begin
+        File.open($1, "r") do |f|
+          debug "Subbing in #{$1}."
+          sub_contents = f.read()
+        end
+      rescue
+        missing_files.push($1)
+      end
+    end
+    if (!missing_files.empty?)
+      raise "The following files could not be included because they could not be found: #{missing_files}"
+    end
+  end
+end
+
+main(ARGV)
