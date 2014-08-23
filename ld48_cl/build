@@ -5,10 +5,17 @@ require 'optparse'
 
 
 def main(args)
-  if (!args.nil?)
-    concat_files(args[0])
+  if (!args.nil? && args.length == 2)
+    story_file = find_story(args[0])
+    story_src = substitute_includes(story_file, story_file)
+    File.open(args[1] + "_src", "w") do |f|
+      f.write(story_src)
+    end
+    twine_location = File.join(File.dirname(__FILE__), "twine", "twee")
+    debug "Running: #{twine_location} #{args[1] + "_src"} > #{args[1]}"
+    `#{twine_location} #{args[1] + "_src"} > #{args[1]}`
   else
-    puts "Usage: build <srcdir> > <output>"
+    puts "Usage: build <srcdir> <output>"
   end
 end
 
@@ -16,36 +23,42 @@ def debug(str)
   puts "[DEBUG] #{str}"
 end
 
-def concat_files(srcdir)
+def find_story(srcdir)
   story = Dir.glob("#{srcdir}/*.tw");
 
   if (!story.empty?)
-    debug "Subbing for file at #{story[0]}."
-    substitute_includes(story[0]);
+    story[0]
   else
-    puts "Cannot find .tw file at #{srcdir}/*.tw"
+    raise "Cannot find .tw file at #{srcdir}/*.tw"
   end
 end
 
-def substitute_includes(story_file)
+def substitute_includes(story_file, story_filename)
+  debug "Subbing for file at #{story_file}."
+  story_definition = ""
   File.open(story_file, "r") do |story|
     story_definition = story.read()
     missing_files = []
-    story_definition.gsub(/!!!include (.*)$/) do |match|
+    story_definition.gsub!(/!!!include (.*)$/) do |match|
       sub_contents = ""
+      include_filename = File.join(File.dirname(story_filename), $1)
+      debug include_filename
       begin
-        File.open($1, "r") do |f|
+        File.open(include_filename, "r") do |f|
           debug "Subbing in #{$1}."
           sub_contents = f.read()
         end
       rescue
+        debug include_filename
         missing_files.push($1)
       end
+      sub_contents
     end
     if (!missing_files.empty?)
       raise "The following files could not be included because they could not be found: #{missing_files}"
     end
   end
+  story_definition
 end
 
 main(ARGV)
