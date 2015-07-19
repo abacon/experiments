@@ -1,0 +1,34 @@
+{
+  "name": "bloom",
+  "version": "1.0.0",
+  "description": "Just some implementations of a bloom filter.",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test/index.js | tap-spec",
+    "lint": "standard",
+    "build": "browserify -t babelify src/index.js -o build/bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/abacon/experiments"
+  },
+  "keywords": [
+    "bloom-filter",
+    "typed-array"
+  ],
+  "author": "Andrew Bacon <abacon@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "babel": "^5.6.23",
+    "range": "0.0.3",
+    "standard": "^4.5.4",
+    "superb": "^1.1.4",
+    "tap-spec": "^4.0.2",
+    "tape": "^4.0.1"
+  },
+  "dependencies": {
+    "babelify": "^6.1.3",
+    "browserify": "^11.0.0",
+    "crypto-js": "^3.1.5"
+  }
+}
