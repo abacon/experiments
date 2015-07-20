@@ -2,8 +2,8 @@ var test = require('tape')
 var superb = require('superb')
 var range = require('range').range
 
-var wordsToAdd = range(0, 10).map(function () { return superb() })
-var wordsNotToAdd = range(0, 10).map(function () { return superb() })
+var wordsToAdd = range(0, 21).map(function () { return superb() })
+var wordsNotToAdd = range(0, 21).map(function () { return superb() })
 
 var bin = function (int) { return (+int).toString(2) }
 

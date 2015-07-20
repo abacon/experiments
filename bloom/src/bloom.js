@@ -1,33 +1,30 @@
-var MD5 = require('crypto-js/MD5')
-// var SHA256 = require('crypto-js/SHA256')
-// var AES = require('crypto-js/AES')
+var fnv = require('fnv-plus')
 
-var bin = function (int) { return (+int).toString(2) }
+var fnvDec = function (item) {
+  var h1 = fnv.hash(item, 32).dec()
+  var h2 = fnv.hash(h1, 32).dec()
+  var makePos = function (int) {
+    return (int << 1) >>> 1
+  }
+  return [h1, h2].map(makePos)
+}
+
 class ArrayBloom {
   constructor (size) {
-    this.filter = [0, 0, 0, 0]
+    this.filter = [0, 0]
     this.size = size
-//    this.hashFns = [
-//      MD5, SHA256, AES
-//    ]
   }
 
   insert (item) {
-    var hashed = MD5(item).words
+    var hashed = fnvDec(item)
     this.filter = this.filter.map(function (word, idx) {
       return word | hashed[idx]
     })
-
-//    for (let hash of this.hashFns) {
-//      let hashed = hash(item)
-//      hashed.
   }
 
   check (item) {
-    console.log(`${item} (${MD5(item).words.map(bin)}) in ${this.filter.toString(2)}?`)
-    var hash = MD5(item).words
+    var hash = fnvDec(item)
     return this.filter.map(function (word, idx) {
-      console.log((word & hash[idx]) === hash[idx])
       return (word & hash[idx]) === hash[idx]
     }).every(function (it) {
       return !!it
