@@ -2,11 +2,11 @@
   "name": "bloom",
   "version": "1.0.0",
   "description": "Just some implementations of a bloom filter.",
-  "main": "index.js",
+  "main": "bundle.min.js",
   "scripts": {
     "test": "tape test/index.js | tap-spec",
     "lint": "standard",
-    "build": "browserify -t babelify src/index.js -o build/bundle.js"
+    "build": "browserify -t babelify -g uglifyify src/bloom.js | uglifyjs -c > bundle.min.js"
   },
   "repository": {
     "type": "git",
@@ -24,11 +24,13 @@
     "standard": "^4.5.4",
     "superb": "^1.1.4",
     "tap-spec": "^4.0.2",
-    "tape": "^4.0.1"
+    "tape": "^4.0.1",
+    "uglify-js": "^2.4.23"
   },
   "dependencies": {
     "babelify": "^6.1.3",
     "browserify": "^11.0.0",
-    "crypto-js": "^3.1.5"
+    "crypto-js": "^3.1.5",
+    "uglifyify": "^3.0.1"
   }
 }
