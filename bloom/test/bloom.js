@@ -1,9 +1,10 @@
 var test = require('tape')
 var superb = require('superb')
+var supervillains = require('supervillains')
 var range = require('range').range
 
-var wordsToAdd = range(0, 21).map(function () { return superb() })
-var wordsNotToAdd = range(0, 21).map(function () { return superb() })
+var wordsToAdd = range(0, 10).map(function () { return superb() })
+var wordsNotToAdd = range(0, 10).map(function () { return supervillains.random() })
 
 var bin = function (int) { return (+int).toString(2) }
 
@@ -21,7 +22,7 @@ var testBloomType = function (Type) {
   test('Empty filters always return false', function (assert) {
     var bf = new Type()
     for (let word of wordsNotToAdd) {
-      assert.false(bf.check(word))
+      assert.false(bf.check(word), word)
     }
     assert.end()
   })
@@ -33,7 +34,7 @@ var testBloomType = function (Type) {
     }
 
     for (let word of wordsNotToAdd) {
-      assert.false(bf.check(word))
+      assert.false(bf.check(word), word)
     }
     assert.end()
   })

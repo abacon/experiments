@@ -23,6 +23,7 @@
     "range": "0.0.3",
     "standard": "^4.5.4",
     "superb": "^1.1.4",
+    "supervillains": "^1.0.0",
     "tap-spec": "^4.0.2",
     "tape": "^4.0.1",
     "uglify-js": "^2.4.23"
